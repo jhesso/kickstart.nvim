@@ -99,7 +99,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -110,7 +110,7 @@ do
   vim.o.number = true
   -- You can also add relative line numbers, to help with jumping.
   --  Experiment for yourself to see if you like it!
-  -- vim.o.relativenumber = true
+  vim.o.relativenumber = true
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -165,12 +165,16 @@ do
   vim.o.cursorline = true
 
   -- Minimal number of screen lines to keep above and below the cursor.
-  vim.o.scrolloff = 10
+  vim.o.scrolloff = 15
 
   -- if performing an operation that would fail due to unsaved changes in the buffer (like `:q`),
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
   vim.o.confirm = true
+
+  vim.o.expandtab = true
+  vim.o.tabstop = 4
+  vim.o.shiftwidth = 4
 end
 
 -- ============================================================
@@ -458,6 +462,10 @@ do
   --  - yiiq - [Y]ank [I]nside [I]+1 [Q]uote
   --  - ci'  - [C]hange [I]nside [']quote
   require('mini.ai').setup {
+    custom_textobjects = {
+      F = require('mini.ai').gen_spec.treesitter { a = '@function.outer', i = '@function.inner' },
+      c = require('mini.ai').gen_spec.treesitter { a = '@class.outer', i = '@class.inner'},
+    },
     -- NOTE: Avoid conflicts with the built-in incremental selection mappings on Neovim>=0.12 (see `:help treesitter-incremental-selection`)
     mappings = {
       around_next = 'aa',
@@ -623,6 +631,11 @@ do
 
   -- Shortcut for searching your Neovim configuration files
   vim.keymap.set('n', '<leader>sn', function() builtin.find_files { cwd = vim.fn.stdpath 'config', follow = true } end, { desc = '[S]earch [N]eovim files' })
+
+  -- Show hidden files, also shows files specified in gitignore
+  vim.keymap.set('n', '<leader>sF', function()
+    require('telescope.builtin').find_files { hidden = true, no_ignore = true }
+  end, { desc = '[S]earch all [F]iles (hidden + ignored)' })
 end
 
 -- ============================================================
@@ -733,6 +746,17 @@ do
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
+    basedpyright = {
+      settings = {
+        basedpyright = {
+          analysis = {
+            typeCheckingMode = 'standard',
+          },
+        },
+      },
+    },
+    ruff = {},
+    ts_ls = {},
     -- clangd = {},
     -- gopls = {},
     -- pyright = {},
@@ -803,6 +827,7 @@ do
   -- You can press `g?` for help in this menu.
   local ensure_installed = vim.tbl_keys(servers or {})
   vim.list_extend(ensure_installed, {
+    'prettierd'
     -- You can add other tools here that you want Mason to install
   })
 
@@ -840,6 +865,9 @@ do
     },
     -- You can also specify external formatters in here.
     formatters_by_ft = {
+      python = { 'ruff_organize_imports', 'ruff_format' },
+      typescript = { 'prettierd' },
+      javascript = { 'prettierd' },
       -- rust = { 'rustfmt' },
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
@@ -948,7 +976,7 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'python', 'typescript', 'javascript', 'htmldjango', 'css', 'json' }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
@@ -1015,15 +1043,15 @@ do
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug'
-  -- require 'kickstart.plugins.indent_line'
+   require 'kickstart.plugins.indent_line'
   -- require 'kickstart.plugins.lint'
-  -- require 'kickstart.plugins.autopairs'
+   require 'kickstart.plugins.autopairs'
   -- require 'kickstart.plugins.neo-tree'
 
   -- NOTE: You can add your own plugins, configuration, etc. in `lua/custom/plugins/*.lua`.
   --
   -- For independent modules, uncomment the convenience loader:
-  -- require 'custom.plugins'
+   require 'custom.plugins'
   --
   -- `custom.plugins` automatically loads files from that directory, but their
   -- order is unspecified. If plugins depend on each other, keep them in the same
